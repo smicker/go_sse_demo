@@ -4,10 +4,10 @@ import "log"
 
 func NewBroadcaster() *Broadcaster {
 	return &Broadcaster{
-		Broadcast:       make(chan []byte),
-		NewConnection:   make(chan chan []byte),
-		CloseConnection: make(chan chan []byte),
-		connections:     make(map[chan []byte]int32),
+		Broadcast:     make(chan []byte),
+		AddChannel:    make(chan chan []byte),
+		RemoveChannel: make(chan chan []byte),
+		channels:      make(map[chan []byte]int32),
 	}
 }
 
@@ -15,14 +15,14 @@ type Broadcaster struct {
 	// Channel for incoming messages to broadcast
 	Broadcast chan []byte
 
-	// Channel to accept new connections
-	NewConnection chan chan []byte
+	// Channel to add a new channel
+	AddChannel chan chan []byte
 
-	// Channel to close connections
-	CloseConnection chan chan []byte
+	// Channel to remove a channel
+	RemoveChannel chan chan []byte
 
-	// Connections
-	connections map[chan []byte]int32
+	// Channels
+	channels map[chan []byte]int32
 }
 
 func (b *Broadcaster) Listen() {
@@ -31,19 +31,19 @@ func (b *Broadcaster) Listen() {
 	for {
 		select {
 		case message := <-b.Broadcast:
-			// broadcast message to all connections
-			for connection := range b.connections {
-				connection <- message
+			// broadcast message to all channels
+			for channel := range b.channels {
+				channel <- message
 			}
-		case connection := <-b.NewConnection:
-			// Add a new connection
-			b.connections[connection] = seq
+		case channel := <-b.AddChannel:
+			// Add a new listener
+			b.channels[channel] = seq
 			seq++
-			log.Println("New connection added")
-		case connection := <-b.CloseConnection:
-			// Close a connection
-			delete(b.connections, connection)
-			log.Println("Deleted Connection")
+			log.Println("New channel added")
+		case channel := <-b.RemoveChannel:
+			// Close a channel
+			delete(b.channels, channel)
+			log.Println("Deleted channel")
 		}
 	}
 }

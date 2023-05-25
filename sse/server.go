@@ -1,7 +1,7 @@
 /*
-An http server that sends messages to connected clients through Server-Sent Events (SSE).
+An http server that sends messages to all connected web clients through Server-Sent Events (SSE).
 	* Only string can be sent.
-	* Supports a maximum of 6 SSE channels per browser session.
+	* Supports a maximum of 6 SSE connections per browser session.
 */
 
 package sse
@@ -41,22 +41,22 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setHeaders(w)
-	clientConnection := make(chan []byte)
-	server.broadcaster.NewConnection <- clientConnection
+	clientChannel := make(chan []byte)
+	server.broadcaster.AddChannel <- clientChannel
 	defer func() {
-		server.broadcaster.CloseConnection <- clientConnection
+		server.broadcaster.RemoveChannel <- clientChannel
 	}()
 
 	isRequestClosed := r.Context().Done()
 
 	go func() {
 		<-isRequestClosed
-		server.broadcaster.CloseConnection <- clientConnection
+		server.broadcaster.RemoveChannel <- clientChannel
 	}()
 
 	for {
-		// This will send any message that comes in on the clientConnection channel to the SSE.
-		message := <-clientConnection
+		// This will send any message that comes in on the clientChannel to the SSE.
+		message := <-clientChannel
 		sendSseMessage(w, message)
 	}
 }
