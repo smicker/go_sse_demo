@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Server Sent Events</title>
+        <style>
+            body {
+                font-family: 'Courier New', Courier, monospace;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                height: 100vh;
+                padding: 0;
+                margin: 0;
+                background: #141414;
+            }
+            h1 {
+                font-size: 3em;
+                color: #aaa;
+            }
+            .box {
+                font-size: 6em;
+                font-weight: bold;
+                background: #464c54;
+                color: #fff;
+                width: 10%;
+                padding: 0.3em;
+                border-radius: 21px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 class"title">Server Sent Events</h1>
+        <div id="data" class="box"></div>
+        <script>
+            let eventSource = new EventSource("http://localhost:8080/")
+            eventSource.onmessage = function(msg) {
+                console.log("Got message: " + msg);
+                document.getElementById("data").innerHTML = msg.data;
+            }
+        </script>
+    </body>
+</html>
